@@ -39,11 +39,15 @@ public class RequestHandler extends Thread {
 
             String[] tokens = line.split(" ");
             int contentLength = 0;
+            String cookie="";
             while (!line.equals("")) {
                 log.debug("header : {}", line);
                 line = br.readLine();
                 if (line.contains("Content-Length")) {
                     contentLength = getContentLength(line);
+                }
+                if(line.contains("Cookie")){
+                    cookie = getContentsValue(line);
                 }
             }
 
@@ -61,8 +65,19 @@ public class RequestHandler extends Thread {
             if (httpsMethod.equals("GET")) {
 
                 if (param == null) { //http 파라미터가 없는경우
-                    contents = new ReadingFileContent().read(uri);
-                    responseResource(out, uri);
+                    if (uri.equals("/user/list")) {
+                        if(IsLogined(cookie)){
+                            for(User user : DataBase.findAll()){
+                                log.info("id :{}", user.getUserId());
+                                log.info("name :{}", user.getName());
+                            }
+
+                        };
+
+                    } else {
+                        contents = new ReadingFileContent().read(uri);
+                        responseResource(out, uri);
+                    }
                 } else {
                     // /user/create 처리
 
@@ -72,6 +87,7 @@ public class RequestHandler extends Thread {
                         log.info("helloWorld");
                         log.info(user.toString());
                     }
+
                 }
             } else if (httpsMethod.equals("POST")) {
                 if (uri.equals("/user/create")) {
@@ -167,8 +183,12 @@ public class RequestHandler extends Thread {
     }
 
     private int getContentLength(String line) {
+        return Integer.parseInt(getContentsValue(line));
+    }
+
+    private String getContentsValue(String line) {
         String[] headerTokens = line.split(":");
-        return Integer.parseInt(headerTokens[1].trim());
+        return headerTokens[1].trim();
     }
 
     private Map httpsBodyParser(String body) throws UnsupportedEncodingException {
@@ -181,6 +201,21 @@ public class RequestHandler extends Thread {
         log.info("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@Here");
         return returnMap;
     }
+
+    private Boolean IsLogined(String cookie){
+        Boolean result = false;
+        if(cookie.contains("logined=true")){
+            log.info("로그인 됨");
+            result = true;
+        }else if(cookie.contains("logined=false")){
+            log.info("로그아웃 상태");
+        }else{
+            log.info("로그인 및 로그아웃 기록 쿠키 부재");
+        }
+
+        return result;
+    }
+
 }
 
 
