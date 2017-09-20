@@ -39,14 +39,14 @@ public class RequestHandler extends Thread {
 
             String[] tokens = line.split(" ");
             int contentLength = 0;
-            String cookie="";
+            String cookie = "";
             while (!line.equals("")) {
                 log.debug("header : {}", line);
                 line = br.readLine();
                 if (line.contains("Content-Length")) {
                     contentLength = getContentLength(line);
                 }
-                if(line.contains("Cookie")){
+                if (line.contains("Cookie")) {
                     cookie = getContentsValue(line);
                 }
             }
@@ -66,14 +66,13 @@ public class RequestHandler extends Thread {
 
                 if (param == null) { //http 파라미터가 없는경우
                     if (uri.equals("/user/list")) {
-                        if(IsLogined(cookie)){
-                            for(User user : DataBase.findAll()){
+                        if (IsLogined(cookie)) {
+                            for (User user : DataBase.findAll()) {
                                 log.info("id :{}", user.getUserId());
                                 log.info("name :{}", user.getName());
                             }
 
-                        };
-
+                        }
                     } else {
                         contents = new ReadingFileContent().read(uri);
                         responseResource(out, uri);
@@ -126,14 +125,32 @@ public class RequestHandler extends Thread {
     private void responseResource(OutputStream out, String uri) throws IOException {
         DataOutputStream dos = new DataOutputStream(out);
         byte[] body = Files.readAllBytes(new File("./webapp" + uri).toPath());
-        response200Header(dos, body.length);
+        String contentType = "html";
+        if(uri.contains("css")){contentType = "css";}
+        response200Header(dos, body.length, contentType);
         responseBody(dos, body);
     }
 
     private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {
         try {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
+
             dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void response200Header(DataOutputStream dos, int lengthOfBodyContent, String contentType) {
+        try {
+            dos.writeBytes("HTTP/1.1 200 OK \r\n");
+            if (contentType.equals("css")) {
+                dos.writeBytes("Content-Type: text/css;charset=utf-8\r\n");
+            } else {
+                dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            }
             dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
@@ -202,14 +219,14 @@ public class RequestHandler extends Thread {
         return returnMap;
     }
 
-    private Boolean IsLogined(String cookie){
+    private Boolean IsLogined(String cookie) {
         Boolean result = false;
-        if(cookie.contains("logined=true")){
+        if (cookie.contains("logined=true")) {
             log.info("로그인 됨");
             result = true;
-        }else if(cookie.contains("logined=false")){
+        } else if (cookie.contains("logined=false")) {
             log.info("로그아웃 상태");
-        }else{
+        } else {
             log.info("로그인 및 로그아웃 기록 쿠키 부재");
         }
 
