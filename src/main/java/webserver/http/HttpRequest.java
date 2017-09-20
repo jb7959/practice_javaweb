@@ -1,76 +1,131 @@
 package webserver.http;
 
-import java.net.URLDecoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import util.IOUtils;
+import webserver.RequestHandler;
 
-import static com.sun.org.apache.xalan.internal.lib.ExsltStrings.split;
+import java.io.*;
+import java.net.URLDecoder;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by 안재열 on 2017-06-15.
+ * Modified by 안재열 on 2017-09-20.
  */
 public class HttpRequest implements IHttpRequest {
-    private String httpMethod = "";
-    private String uri = "";
-    private String version = "";
-    private String param = "";
 
-    public HttpRequest(String inputStream) {
-        String[] httpRequests = inputStream.split(" ");
-        this.httpMethod = httpRequests[0];
-        //Splitting HTTP Get method.
-        if (httpRequests[1].contains("?")) {
-           this.param = URLDecoder.decode(httpRequests[1].substring(httpRequests[1].indexOf("?")));
-           this.uri = httpRequests[1].substring(0,httpRequests[1].indexOf("?"));
-        } else {
-            this.uri = httpRequests[1];
+    private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
+
+    private String path = "";
+    private Map header;
+    private Map parameter;
+    private String method = "";
+    private String body ="";
+/*
+        assertEquals("POST", request.getMethod());
+        assertEquals("/user/create", request.getPath());
+        assertEquals("keep-alive", request.getHeader("Connection"));
+        assertEquals("javajigi", request.getParameter("userId"));*/
+
+
+    public HttpRequest(InputStream in) throws IOException {
+        String contents = "";
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
         }
-        this.version = httpRequests[2];
+        String line = br.readLine();
+        log.debug("request line :{}", line);
+        String[] tokens = line.split(" ");
+        int contentLength = 0;
+        String cookie = "";
+
+        //Method, Parameter, path 초기화
+        String requestLine = line; // HTTP 요청라인
+        this.method = tokens[0];
+        this.path = tokens[1];
+        if (path.contains("?")) {
+            String parameter = URLDecoder.decode(path.substring(path.indexOf("?") + 1));
+            //path 초기화
+            this.path = path.substring(0, path.indexOf("?"));
+            //parameter 초기화
+            this.parameter = parameterPaser(parameter);
+        }
+
+        //header 초기화 부분
+        this.header = new HashMap<String, String>();
+        while (!line.equals("")) {
+            line = br.readLine();
+            try {
+                if(!line.isEmpty()){
+                String[] splitedHeader = line.split(" ");
+                this.header.put(splitedHeader[0].replace(":"," ").trim(), splitedHeader[1].replace(":"," ").trim());
+                }
+            }catch (ArrayIndexOutOfBoundsException e){
+                log.error(e.toString());
+            }
+        }
+        //body 생성 (post)
+        if(this.method.toLowerCase().equals("post")){
+        this.body = IOUtils.readData(br, Integer.parseInt(this.header.get("Content-Length").toString()));
+        this.parameter = parameterPaser(body);
+        }
     }
 
-    public HttpRequest(String httpMethod, String uri, String version) {
-        this.httpMethod = httpMethod;
-        this.uri = uri;
-        this.version = version;
+    public String getPath() {
+        return path;
     }
 
-    public String getHttpMethod() {
-        return httpMethod;
+    public Map getHeader() {
+        return header;
     }
 
-    public void setHttpMethod(String httpMethod) {
-        this.httpMethod = httpMethod;
+    public String getHeader(String id) {
+        String rv ="";
+        try {
+            log.info(this.header.get(id).toString());
+            rv = this.header.get(id).toString();
+        }catch (NullPointerException e){
+            log.error("요청하신 값이 존재하지 않습니다.");
+        }
+        return rv;
     }
 
-    public String getUri() {
-        return uri;
+    public Map getParameter() {
+        return parameter;
     }
 
-    public void setUri(String uri) {
-        this.uri = uri;
+    public String getParameter(String id) {
+        return this.parameter.get(id).toString();
     }
 
-    public String getVersion() {
-        return version;
+    public String getMethod() {
+        return this.method;
     }
 
-    public void setVersion(String version) {
-        this.version = version;
+    private int getContentLength(String line) {
+        return Integer.parseInt(getContentsValue(line));
     }
 
-    public String getParam() {
-        return param;
+    private String getContentsValue(String line) {
+        String[] headerTokens = line.split(":");
+        return headerTokens[1].trim();
     }
 
-    public void setParam(String param) {
-        this.param = param;
+    private static Map parameterPaser(String param){
+        String parameter = URLDecoder.decode(param.substring(param.indexOf("?") + 1));
+        Map returnParam = new HashMap<String, String>();
+        String[] params = parameter.split("&");
+        for (String p : params) {
+            String temp[] = p.split("\\=");
+            returnParam.put(temp[0], temp[1]);
+        }
+        return returnParam;
     }
 
-    @Override
-    public String toString() {
-        return "HttpRequest{" +
-                "httpMethod='" + httpMethod + '\'' +
-                ", uri='" + uri + '\'' +
-                ", version='" + version + '\'' +
-                '}';
-    }
 }
 
