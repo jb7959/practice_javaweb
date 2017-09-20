@@ -23,12 +23,6 @@ public class HttpRequest implements IHttpRequest {
     private Map parameter;
     private String method = "";
     private String body ="";
-/*
-        assertEquals("POST", request.getMethod());
-        assertEquals("/user/create", request.getPath());
-        assertEquals("keep-alive", request.getHeader("Connection"));
-        assertEquals("javajigi", request.getParameter("userId"));*/
-
 
     public HttpRequest(InputStream in) throws IOException {
         String contents = "";
