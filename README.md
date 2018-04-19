@@ -84,7 +84,7 @@
                         
 
 ### 요구사항 6 - stylesheet 적용
-* 
+* HTTP의 Response-Header에 있는 Content-Type에 따라서 브라우저가 CSS, JS 등을 판단하여 해당 포맷의 일(?) 을 수행한다.
 
 ### heroku 서버에 배포 후
 * 

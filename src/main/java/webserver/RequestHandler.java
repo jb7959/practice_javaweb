@@ -38,6 +38,8 @@ public class RequestHandler extends Thread {
             String method = httpHead.split("\\s+")[0];
             String uri = httpHead.split("\\s+")[1];
             String httpVersion = httpHead.split("\\s+")[2];
+            String reqMimtype = uri.split("\\?")[0].split("\\.")[uri.split("\\?")[0].split("\\.").length - 1];
+            String mimeType = "text/html";
             uri= defaultPath+uri;
 
             if(method.equals("POST")){
@@ -104,10 +106,17 @@ public class RequestHandler extends Thread {
                 }
 
             }
-
             /*로그인요청끝 /user/login */
+            log.info("#####################{}",reqMimtype);
+            if(reqMimtype.equals("css")){
+                mimeType = "text/css";
+            }else if(reqMimtype.equals("js")){
+                mimeType ="application/javascript";
+            }
+
             byte[] body = Files.readAllBytes(new File(uri).toPath()); //NIO를 활용한 File to byte[]body
-            response200Header(dos, body.length);
+
+            response200Header(dos, body.length,mimeType);
             responseBody(dos, body);
 
         } catch (IOException e) {
@@ -156,10 +165,10 @@ public class RequestHandler extends Thread {
         }
     }
 
-    private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {
+    private void response200Header(DataOutputStream dos, int lengthOfBodyContent, String mimeType) {
         try {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
-            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            dos.writeBytes("Content-Type: "+mimeType+";charset=utf-8\r\n");
             dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
