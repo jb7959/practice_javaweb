@@ -25,49 +25,28 @@ public class HttpRequest implements IHttpRequest {
     private String body ="";
 
     public HttpRequest(InputStream in) throws IOException {
-        String contents = "";
-        BufferedReader br = null;
-        try {
-            br = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        String line = br.readLine();
-        log.debug("request line :{}", line);
-        String[] tokens = line.split(" ");
-        int contentLength = 0;
-        String cookie = "";
-
-        //Method, Parameter, path 초기화
-        String requestLine = line; // HTTP 요청라인
-        this.method = tokens[0];
-        this.path = tokens[1];
-        if (path.contains("?")) {
-            String parameter = URLDecoder.decode(path.substring(path.indexOf("?") + 1));
-            //path 초기화
-            this.path = path.substring(0, path.indexOf("?"));
-            //parameter 초기화
-            this.parameter = parameterPaser(parameter);
-        }
-
-        //header 초기화 부분
-        this.header = new HashMap<String, String>();
-        while (!line.equals("")) {
-            line = br.readLine();
-            try {
-                if(!line.isEmpty()){
-                String[] splitedHeader = line.split(" ");
-                this.header.put(splitedHeader[0].replace(":"," ").trim(), splitedHeader[1].replace(":"," ").trim());
-                }
-            }catch (ArrayIndexOutOfBoundsException e){
-                log.error(e.toString());
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+        String text;
+        int lineLength = 0;
+        boolean hasBody = false;
+        while((text = reader.readLine())!=null){
+            if(lineLength==0){
+                this.header = new HashMap();
+                header.put("method",text.split("\\s+")[0]);
+                header.put("uri",text.split("\\s+")[1]);
+                header.put("httpVersion",text.split("\\s+")[2]);
+            }else if(text.equals("\\r\\n\\r\\n")){
+                log.info("HTTP 바디 시작");
+                hasBody = true;
+            }else if(!hasBody){
+                //예) Connection: keep-alive
+                String[] tempHttpHead = text.split(":");
+                header.put(tempHttpHead[0],tempHttpHead[1]);
             }
+            log.info("읽은 것 : {}",text);
+            lineLength ++;
         }
-        //body 생성 (post)
-        if(this.method.toLowerCase().equals("post")){
-        this.body = IOUtils.readData(br, Integer.parseInt(this.header.get("Content-Length").toString()));
-        this.parameter = parameterPaser(body);
-        }
+
     }
 
     public String getPath() {

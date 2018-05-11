@@ -10,6 +10,7 @@ import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import util.IOUtils;
+import webserver.http.HttpRequest;
 
 public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
@@ -24,14 +25,14 @@ public class RequestHandler extends Thread {
     public void run() {
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
             DataOutputStream dos = new DataOutputStream(out);
-
+            new HttpRequest(in);
             ///////////////////////HTTP REQUEST 해석//////////////////////////////////////
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             String  req = IOUtils.readData(reader,connection.getReceiveBufferSize());
+
             String [] headAndBody = req.split("\\r\\n\\r\\n"); //줄바꿈을 기준으로 분리(한줄공백)
             String httpHead = headAndBody[0];
             String httpBody ="";
-            log.debug("HttpHead:::::::::::::::::::::::::{}",req);
             httpHead.split("\\s+"); //띄어쓰기를 기준으로 분류
 
             //todo Http Model 만들어서 해결 할 것 18.04.16
