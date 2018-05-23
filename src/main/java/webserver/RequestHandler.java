@@ -25,32 +25,33 @@ public class RequestHandler extends Thread {
     public void run() {
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
             DataOutputStream dos = new DataOutputStream(out);
-            new HttpRequest(in);
+            HttpRequest httpRequest = new HttpRequest(in);
             ///////////////////////HTTP REQUEST 해석//////////////////////////////////////
-            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+ /*           BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             String  req = IOUtils.readData(reader,connection.getReceiveBufferSize());
 
             String [] headAndBody = req.split("\\r\\n\\r\\n"); //줄바꿈을 기준으로 분리(한줄공백)
             String httpHead = headAndBody[0];
             String httpBody ="";
-            httpHead.split("\\s+"); //띄어쓰기를 기준으로 분류
+            httpHead.split("\\s+"); //띄어쓰기를 기준으로 분류*/
 
             //todo Http Model 만들어서 해결 할 것 18.04.16
-            String method = httpHead.split("\\s+")[0];
-            String uri = httpHead.split("\\s+")[1];
-            String httpVersion = httpHead.split("\\s+")[2];
+            String method = httpRequest.getMethod();
+            String uri = httpRequest.getPath();
+            String httpVersion = httpRequest.getHttpVersion();
             String reqMimtype = uri.split("\\?")[0].split("\\.")[uri.split("\\?")[0].split("\\.").length - 1];
+            log.info("###############{}",reqMimtype);
             String mimeType = "text/html";
             uri= defaultPath+uri;
 
-            if(method.equals("POST")){
+/*            if(method.equals("POST")){
                 httpBody = headAndBody[1];
-            }
+            }*/
 
             ///////////////////////HTTP REQUEST 해석//////////////////////////////////////
 
             /*회원가입요청 /user/create */
-            if(uri.split("\\?")[0].equals(defaultPath+"/user/create")){
+           /* if(uri.split("\\?")[0].equals(defaultPath+"/user/create")){
                 Map<String,String> map = null;
                 //get일 경우
                 if(method.equals("GET")){
@@ -65,9 +66,9 @@ public class RequestHandler extends Thread {
                 response302Header(dos,uri);
                 responseBody(dos,new byte[0]);
             }
-            /*회원가입요청끝*/
+            *//*회원가입요청끝*//*
 
-            /*로그인요청 /user/login */
+            *//*로그인요청 /user/login *//*
             if(uri.split("\\?")[0].equals(defaultPath+"/user/login")){
                 Map<String,String> map = null;
 
@@ -107,13 +108,13 @@ public class RequestHandler extends Thread {
                 }
 
             }
-            /*로그인요청끝 /user/login */
+            *//*로그인요청끝 /user/login *//*
             log.info("#####################{}",reqMimtype);
             if(reqMimtype.equals("css")){
                 mimeType = "text/css";
             }else if(reqMimtype.equals("js")){
                 mimeType ="application/javascript";
-            }
+            }*/
 
             byte[] body = Files.readAllBytes(new File(uri).toPath()); //NIO를 활용한 File to byte[]body
 

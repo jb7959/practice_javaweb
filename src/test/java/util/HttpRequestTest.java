@@ -14,7 +14,7 @@ import static org.junit.Assert.assertEquals;
 public class HttpRequestTest {
     private String testDirectory = "./src/test/resources/";
 
-    @Test
+/*    @Test
     public void request_GET() throws Exception{
         InputStream in = new FileInputStream(new File(testDirectory + "Http_GET.txt"));
         HttpRequest request = new HttpRequest(in);
@@ -33,5 +33,5 @@ public class HttpRequestTest {
         assertEquals("/user/create", request.getPath());
         assertEquals("keep-alive", request.getHeader("Connection"));
         assertEquals("javajigi", request.getParameter("userId"));
-    }
+    }*/
 }
