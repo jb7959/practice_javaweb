@@ -33,8 +33,8 @@ public class HttpRequest implements IHttpRequest {
         String  req = IOUtils.readData(reader,receiveBufferSize);
         String [] headAndBody = req.split("\\r\\n\\r\\n"); //줄바꿈을 기준으로 분리(한줄공백)
         header = new HashMap();
-        splitToHead(headAndBody[0]); //헤더 세팅
         this.body = headAndBody[1]; // 바디 세팅
+        splitToHead(headAndBody[0]); //헤더 세팅
     }
 
     private  void splitToHead(String head){
@@ -46,7 +46,19 @@ public class HttpRequest implements IHttpRequest {
                 this.path = temp[1];
                 this.httpVersion = temp[2];
                 String mimeTypeOnPath = null;
-                if((mimeTypeOnPath = path.split("\\?")[0].split("\\.")[path.split("\\?")[0].split("\\.").length - 1])!=null){ //URI에 .확장자로 미디어타입이 나타난다면..
+
+                //파라미터 추가
+                if(this.method.toLowerCase().equals("get")){
+                    if(path.contains("?")){
+                        String [] splitedPath = path.split("\\?");
+                        this.path = splitedPath[0];
+                        setParameter(splitedPath[1]);
+                    }
+                }else {
+                    setParameter(this.body);
+                }
+
+                if((mimeTypeOnPath = path.split("\\.")[path.split("\\.").length - 1])!=null){ //URI에 .확장자로 미디어타입이 나타난다면..
                     if(mimeTypeOnPath.equals("css")){
                         contentType = "text/css";
                     }else if(mimeTypeOnPath.equals("js")){
@@ -55,8 +67,8 @@ public class HttpRequest implements IHttpRequest {
                 }
             }else {
                 String [] temp = heads[i].split(":");
-                log.info("{}:{}",temp[0],temp[1]);
-                this.header.put(temp[0],temp[1]);
+                log.info("{}:{}",temp[0],temp[1].trim());
+                this.header.put(temp[0],temp[1].trim());
                 if(temp.equals("Content-Type")){
                     this.contentType = temp[1]; //HTTP Request 헤더에 컨텐츠 타입으로 미디어 타입이 나타난다면..
                 }
@@ -68,6 +80,17 @@ public class HttpRequest implements IHttpRequest {
                  ******************/
             }
         }
+    }
+
+    private void setParameter(String params){
+        this.parameter = new HashMap();
+        String [] splitedParams = params.split("&");
+        for (String eachParam:splitedParams) {
+            String [] eachParamSet = eachParam.split("=");
+            this.parameter.put(eachParamSet[0],eachParamSet[1].trim());
+            log.info("PARAMS {}:{}",eachParamSet[0],eachParamSet[1].trim());
+        }
+
     }
 
     public String getPath() {

@@ -33,21 +33,11 @@ public class RequestHandler extends Thread {
             String mimeType = httpRequest.getContentType();
             uri= defaultPath+uri;
 
-/*            if(method.equals("POST")){
-                httpBody = headAndBody[1];
-            }*/
-
             ///////////////////////HTTP REQUEST 해석//////////////////////////////////////
 
             /*회원가입요청 /user/create */
-           /* if(uri.split("\\?")[0].equals(defaultPath+"/user/create")){
-                Map<String,String> map = null;
-                //get일 경우
-                if(method.equals("GET")){
-                    map = getParam(uri);
-                }else if(method.equals("POST")){
-                    map = getParam(httpBody);
-                }
+            if(uri.split("\\?")[0].equals(defaultPath+"/user/create")){
+                Map<String,String> map =  httpRequest.getParameter();
                 User user = new User(map.get("userId"),map.get("password"),map.get("name"),map.get("email"));
                 log.info("추가된 유저 {}",user.toString());
                 users.put(user.getUserId(),user);
@@ -55,9 +45,9 @@ public class RequestHandler extends Thread {
                 response302Header(dos,uri);
                 responseBody(dos,new byte[0]);
             }
-            *//*회원가입요청끝*//*
+            //*회원가입요청끝*/
 
-            *//*로그인요청 /user/login *//*
+            //*로그인요청 /user/login */
             if(uri.split("\\?")[0].equals(defaultPath+"/user/login")){
                 Map<String,String> map = null;
 
@@ -69,7 +59,7 @@ public class RequestHandler extends Thread {
                 if(method.equals("GET")){
                     uri = "/user/login.html";
                 }else if(method.equals("POST")){
-                    map = getParam(httpBody);
+                    map = httpRequest.getParameter();
 
                     if(users.containsKey(map.get("userId"))){
                         String userId = map.get("userId");
@@ -97,13 +87,7 @@ public class RequestHandler extends Thread {
                 }
 
             }
-            *//*로그인요청끝 /user/login *//*
-            log.info("#####################{}",reqMimtype);
-            if(reqMimtype.equals("css")){
-                mimeType = "text/css";
-            }else if(reqMimtype.equals("js")){
-                mimeType ="application/javascript";
-            }*/
+            //*로그인요청끝 /user/login */
 
             byte[] body = Files.readAllBytes(new File(uri).toPath()); //NIO를 활용한 File to byte[]body
 
