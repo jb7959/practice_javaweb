@@ -23,54 +23,51 @@ public class HttpRequest implements IHttpRequest {
     private String method = "";
     private String httpVersion = "";
     private String body ="";
+    private Map header;
+    private String contentType = "text/html";
 
 
 
-    public HttpRequest(InputStream in) throws IOException {
+    public HttpRequest(InputStream in,int receiveBufferSize) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-        String text;
-        int lineLength = 0;
-        boolean hasBody = false;
+        String  req = IOUtils.readData(reader,receiveBufferSize);
+        String [] headAndBody = req.split("\\r\\n\\r\\n"); //줄바꿈을 기준으로 분리(한줄공백)
+        header = new HashMap();
+        splitToHead(headAndBody[0]); //헤더 세팅
+        this.body = headAndBody[1]; // 바디 세팅
+    }
 
-        while((text = reader.readLine())!=null){
-
-            if(lineLength==0){
-                String [] httpReqFirstLines = text.split("\\s+");
-                this.method = httpReqFirstLines[0];
-                //get 파라이터가 있을 때, ? 이하 분리
-                if(httpReqFirstLines[1].contains("\\?")){
-                    String [] pathAndParams = httpReqFirstLines[1].split("\\?");
-                    this.path = pathAndParams[0];
-                    this.parameter = new HashMap();
-                    String [] params = pathAndParams[1].split("&");
-
-                    for (int i = 0; i < params.length; i++){
-                        String [] eachParams = params[i].split("=");
-                        this.parameter.put(eachParams[0],eachParams[1]);
+    private  void splitToHead(String head){
+        String [] heads = head.split("\\r\\n");
+        for(int i = 0;i<heads.length;i ++){
+            if(i==0){
+                String [] temp = heads[0].split("\\s+");
+                this.method = temp[0];
+                this.path = temp[1];
+                this.httpVersion = temp[2];
+                String mimeTypeOnPath = null;
+                if((mimeTypeOnPath = path.split("\\?")[0].split("\\.")[path.split("\\?")[0].split("\\.").length - 1])!=null){ //URI에 .확장자로 미디어타입이 나타난다면..
+                    if(mimeTypeOnPath.equals("css")){
+                        contentType = "text/css";
+                    }else if(mimeTypeOnPath.equals("js")){
+                        contentType ="application/javascript";
                     }
-                }else{
-                    this.path = httpReqFirstLines[1];
                 }
-
-                this.httpVersion = httpReqFirstLines[2];
-            }else if(!hasBody){
-                if(text.equals("\\r\\n\\r\\n")){
-                    log.info("HTTP 바디 시작");
-                    hasBody = true;
-                }else{
-                    //예) Connection: keep-alive
-                    String[] tempHttpHead = text.split(":");
-                   // header.put(tempHttpHead[0],tempHttpHead[1]);
+            }else {
+                String [] temp = heads[i].split(":");
+                log.info("{}:{}",temp[0],temp[1]);
+                this.header.put(temp[0],temp[1]);
+                if(temp.equals("Content-Type")){
+                    this.contentType = temp[1]; //HTTP Request 헤더에 컨텐츠 타입으로 미디어 타입이 나타난다면..
                 }
+                /******************
+                 *예시
+                Accept-Encoding : gzip, deflate, br
+                Accept-Language : ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7
+                Cookie : Idea-1c2d522=0a1ffc35-2e45-4ae1-a55d-20dcd816da5f; __utma=111872281.974471363.1523597591.1523597591.1523597591.1; __utmz=111872281.1523597591.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)
+                 ******************/
             }
-            if(text.equals("")){
-                log.info("널읽음HTTP 바디 시작");
-                reader.close();
-            }
-            log.info("읽은 것 : {}{}",text,lineLength);
-            lineLength ++;
         }
-
     }
 
     public String getPath() {
@@ -124,6 +121,14 @@ public class HttpRequest implements IHttpRequest {
 
     public void setBody(String body) {
         this.body = body;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
     }
 
     private static Map parameterPaser(String param){

@@ -25,23 +25,12 @@ public class RequestHandler extends Thread {
     public void run() {
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
             DataOutputStream dos = new DataOutputStream(out);
-            HttpRequest httpRequest = new HttpRequest(in);
-            ///////////////////////HTTP REQUEST 해석//////////////////////////////////////
- /*           BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-            String  req = IOUtils.readData(reader,connection.getReceiveBufferSize());
+            HttpRequest httpRequest = new HttpRequest(in,connection.getReceiveBufferSize());
 
-            String [] headAndBody = req.split("\\r\\n\\r\\n"); //줄바꿈을 기준으로 분리(한줄공백)
-            String httpHead = headAndBody[0];
-            String httpBody ="";
-            httpHead.split("\\s+"); //띄어쓰기를 기준으로 분류*/
-
-            //todo Http Model 만들어서 해결 할 것 18.04.16
             String method = httpRequest.getMethod();
             String uri = httpRequest.getPath();
             String httpVersion = httpRequest.getHttpVersion();
-            String reqMimtype = uri.split("\\?")[0].split("\\.")[uri.split("\\?")[0].split("\\.").length - 1];
-            log.info("###############{}",reqMimtype);
-            String mimeType = "text/html";
+            String mimeType = httpRequest.getContentType();
             uri= defaultPath+uri;
 
 /*            if(method.equals("POST")){
