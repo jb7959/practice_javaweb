@@ -67,7 +67,7 @@ public class HttpResponse {
         try {
             dos.write(body, 0, body.length);
             dos.writeBytes("\r\n");
-            dos.flush();
+            dos.flush(); //전송
         } catch (IOException e) {
             log.error(e.getMessage());
         }

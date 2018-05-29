@@ -1,5 +1,6 @@
 package webserver;
 
+import http.HttpMapper;
 import http.HttpRequest;
 import http.HttpResponse;
 
@@ -36,45 +37,8 @@ public class RequestHandler extends Thread {
             HttpResponse response = new HttpResponse(out);
             String path = getDefaultPath(request.getPath());
 
-            if ("/user/create".equals(path)) {
-                User user = new User(request.getParameter("userId"), request.getParameter("password"),
-                        request.getParameter("name"), request.getParameter("email"));
-                log.debug("user : {}", user);
-                DataBase.addUser(user);
-                response.sendRedirect("/index.html");
-            } else if ("/user/login".equals(path)) {
-                User user = DataBase.findUserById(request.getParameter("userId"));
-                if (user != null) {
-                    if (user.login(request.getParameter("password"))) {
-                        response.addHeader("Set-Cookie", "logined=true; Path=/");
-                        response.sendRedirect("/index.html");
-                    } else {
-                        response.sendRedirect("/user/login_failed.html");
-                    }
-                } else {
-                    response.sendRedirect("/user/login_failed.html");
-                }
-            } else if ("/user/list".equals(path)) {
-                if (!isLogin(request.getHeader("Cookie"))) {
-                    response.sendRedirect("/user/login.html");
-                    return;
-                }
+            HttpMapper.route(path,request,response);
 
-                Collection<User> users = DataBase.findAll();
-                StringBuilder sb = new StringBuilder();
-                sb.append("<table border='1'>");
-                for (User user : users) {
-                    sb.append("<tr>");
-                    sb.append("<td>" + user.getUserId() + "</td>");
-                    sb.append("<td>" + user.getName() + "</td>");
-                    sb.append("<td>" + user.getEmail() + "</td>");
-                    sb.append("</tr>");
-                }
-                sb.append("</table>");
-                response.forwardBody(sb.toString());
-            } else {
-                response.forward(path);
-            }
         } catch (IOException e) {
             log.error(e.getMessage());
         }
